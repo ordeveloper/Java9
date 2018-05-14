@@ -9,10 +9,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -32,7 +32,6 @@ public class App {
 	public static void main(String[] args) {
 		try {
 			System.out.println("Hello World!");
-
 			collectionTest();
 			writeFile(new BufferedWriter(new FileWriter("Easy")), "Sample");
 			detailAllProcess();
@@ -40,9 +39,7 @@ public class App {
 			// callHttpUrl(args[0]);
 
 			collectionImmutable();
-
 			singletonExample();
-
 			lambdaTest();
 
 			playWithTime();
@@ -52,18 +49,33 @@ public class App {
 
 	}
 
+	
+	
 	private static void lambdaTest() {
 
 		// posso anche non specificare il tipo del parametro es: String mex
 		LambdaPrint ciao = (mex) -> {
-			if (mex.length() > 10) {
+			if (mex != null && mex.length() > 10) {
 				System.out.println(mex);
 			}
 			;
 		};
-
 		ciao.scriviQualcosa("oggi scrivo questo con interface");
 		ciao.scriviQualcosa("impox");
+		ciao.scriviQualcosa(null);
+		
+		Function<String,String> replaceCWithZ = (testo) -> {
+			return testo.toLowerCase().replace("c", "z");
+		};
+		Function<String,String> replaceZWithR = (testo) -> {
+			return testo.toLowerCase().replace("z", "r");
+		};
+		System.out.println("Function interface C WITH Z " + replaceCWithZ.apply("amici"));
+		
+		//TODO verificare comportamento con andThen e Compose
+		System.out.println("risultato M with Q  " + replaceCWithZ.andThen(replaceZWithR).apply("Milano Area C"));
+		replaceCWithZ.compose(replaceZWithR).apply("ciao");
+		
 	}
 
 	private static void singletonExample() {
@@ -87,14 +99,12 @@ public class App {
 		System.out.println("Oggi è il giorno " + ora.format(dateFormatter));
 		System.out.println("sono le ore " + ora.format(hourFormatter));
 		System.out.println("ZoneId default" + ZoneId.systemDefault().toString());
-
 		System.out.println("30 giorni fa era " + ora.minusDays(30).format(dateFormatter));
 	}
 
 	private static void collectionImmutable() {
 
 		try {
-
 			// uso il costrutto Collection.of
 			List<String> notChangeable = List.of("ciao", "io", "sono");
 			notChangeable.add("roberto");
@@ -125,7 +135,6 @@ public class App {
 
 	}
 
-	// TODO non funziona come dovrebbe
 	private static void testStream() {
 
 		String[] languages = { "C#",  "Go", "Java", "VB","XML","C#" };
@@ -135,8 +144,6 @@ public class App {
 		
 		System.out.println(System.lineSeparator() + "Elementi originali DISTINTI");
 		Stream.of(languages).distinct().forEach( s -> {System.out.print(s + " - ");});
-		
-		//System.out.println(System.lineSeparator() + "Elementi originali DISTINTI");
 		
 		
 		// test predicati
@@ -150,23 +157,23 @@ public class App {
 		System.out.println("Elementi originali ORDINATI");
 		Stream.of(languages).sorted().forEach(System.out::println);
 		System.out.print("Il primo elemento corrisponde a " );
+		
+		//ifPresent perchè è di tipo Optional
 		Stream.of(languages).findFirst().ifPresent(s -> System.out.println(s));
 		
+		Optional<String> minimal = Stream.of(languages).min(new Comparatore());
+		minimal.ifPresent(s -> System.out.println(" Il valore minore è " + s));
+		
 		String[] emptyArray = {};
-		System.out.print("Array vuoto, allora non stampo nulla " );
+		System.out.println("Array vuoto, allora non stampo nulla " );
 		Stream.of(emptyArray).findFirst().ifPresent(s -> System.out.println("primo elemento presente. ERRORE"));
-		
-		
+		Optional<String> minimalError = Stream.of(emptyArray).min(new Comparatore());
+		System.out.println("Il valore minore dell'array vuoto è " + minimalError.orElse("EMPTY_ARRAY"));
 		
 		// Stream.of(languages).dropWhile(langJava).forEach(System.out::println);
 
-		// for (String elem : lang) {
-		// if (langGo.or(langJava).test(elem)) {
-		// System.out.println(" Filter record " + elem);
-		// }
-		//
-		// }
 
+		//FIXME
 		// ELIMINA solo gli elementi SUCCESSIVI a quello che contiene Java
 		// System.out.println("Elementi successivi");
 		// Stream.of(lang).dropWhile(s ->
@@ -195,4 +202,13 @@ public class App {
 		return (command.isPresent() ? new StringBuilder().append(command).append("-").append(pid).toString() : "");
 	}
 
+	
+	private static class Comparatore implements Comparator<String>{
+
+		@Override
+		public int compare(String o1, String o2) {
+			return o1.compareTo(o2);
+		}
+		
+	}
 }
